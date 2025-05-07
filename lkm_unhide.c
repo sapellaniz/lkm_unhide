@@ -78,14 +78,15 @@ static void scan_hidden_modules(unsigned long scan_base_addr, unsigned long scan
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
   for (addr = scan_base_addr; addr < scan_top_addr; addr += address_size) {
-  copy_from_kernel_nofault(&value, (void *)addr, sizeof(value));
-  if (value == LIST_POISON1)
-    copy_from_kernel_nofault(&value, (void *) (addr + address_size), sizeof(value));
-    if (value == LIST_POISON2) {
-      target_mod = addr - address_size;
-      pr_info("[lkm_unhide] Found hidden module: %s", target_mod->name);
-      list_add(&target_mod->list, THIS_MODULE->list.prev);
-      break;
+    copy_from_kernel_nofault(&value, (void *)addr, sizeof(value));
+    if (value == LIST_POISON1) {
+      copy_from_kernel_nofault(&value, (void *) (addr + address_size), sizeof(value));
+      if (value == LIST_POISON2) {
+        target_mod = addr - address_size;
+        pr_info("[lkm_unhide] Found hidden module: %s", target_mod->name);
+        list_add(&target_mod->list, THIS_MODULE->list.prev);
+        break;
+      }
     }
   }
 #else
